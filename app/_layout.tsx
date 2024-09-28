@@ -8,6 +8,7 @@ import ItemMeasureUnit from '@/models/itemMeasreUnitModel';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import shoppingItem from '@/models/shoppingItemModel';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -15,28 +16,31 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
-  const [items, setItems] = useState([
+  const [items, setItems] = useState<GroceryItem[]>([
     {
       ID: 1,
       name: "tomato",
       unitID: 1,
-      useTimePerUnit: 8
+      useTimePerUnit: 5,
+      itemClassificationID: 0
     },
     {
       ID: 2,
       name: "onion",
       unitID: 1,
-      useTimePerUnit: 5
+      useTimePerUnit: 5,
+      itemClassificationID: 0
     },
     {
       ID: 3,
       name: "rope",
       unitID: 2,
-      useTimePerUnit: 2
+      useTimePerUnit: 2,
+      itemClassificationID: 0
     }
   ]);
 
-  const [units, setUnits] = useState([
+  const [units, setUnits] = useState<ItemMeasureUnit[]>([
     {
       ID: 1,
       name: "Kilogram",
@@ -46,6 +50,18 @@ export default function RootLayout() {
       ID: 2,
       name: "Meters",
       shortName: "m",
+    },
+  ]);
+
+  let dasd = new Date();
+  dasd.setDate(dasd.getDate() - 8);
+  console.log("date",dasd)
+  const [shoppedItems, setShoppedItems] = useState<shoppingItem[]>([
+    {
+      ID: 1,
+      itemID: 1,
+      purchaseAmount: 2,
+      purchaseDate: dasd
     },
   ]);
 
@@ -72,7 +88,8 @@ export default function RootLayout() {
       ID: items.length+1,
       name: name,
       unitID: unit,
-      useTimePerUnit: useTimePerUnit
+      useTimePerUnit: useTimePerUnit,
+      itemClassificationID: 0
     })
     setItems(itemList);
     newItem = new GroceryItem();
@@ -124,7 +141,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AllDataContext.Provider value={{
-        items, units,
+        items, units, shoppedItems,
         createNewItem, saveEditedItem, deleteItem,
         createNewUnit, saveEditedUnit, deleteUnit
         }}
