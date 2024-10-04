@@ -24,5 +24,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+    backgroundColor: "#2b2929"
   },
 });

@@ -10,6 +10,9 @@ const EditUnitModal = ({unit, saveItem, iconType}: {unit: ItemMeasureUnit} & {sa
   const [modalVisible, setModalVisible] = useState(false);
   const [name, setName] = useState(unit.name);
   const [shortName, setShortName] = useState(unit.shortName);
+  const [subUnitName, setSubUnitName] = useState(unit.subUnitName);
+  const [subUnitShortName, setSubUnitShortName] = useState(unit.subUnitShortName);
+  const [subUnitRatio, setSubUnitRatio] = useState(unit.subUnitRatio);
 
   return (
     <View style={styles.centeredView}>
@@ -35,6 +38,25 @@ const EditUnitModal = ({unit, saveItem, iconType}: {unit: ItemMeasureUnit} & {sa
                 onChangeText={setShortName}
                 placeholder="Short Name"
                 value={shortName}
+            />
+                        <TextInput
+                style={styles.input}
+                onChangeText={setSubUnitName}
+                placeholder="Sub Unit Name"
+                value={subUnitName}
+            />
+                        <TextInput
+                style={styles.input}
+                onChangeText={setSubUnitShortName}
+                placeholder="Sub Unit Shortname"
+                value={subUnitShortName}
+            />
+            <TextInput
+                style={styles.input}
+                onChangeText={(val) => setSubUnitRatio(Number(val))}
+                value={String(subUnitRatio)}
+                placeholder="sub unit Ratio"
+                keyboardType="numeric"
             />
 
             <View style={styles.buttonsSection}>

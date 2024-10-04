@@ -33,7 +33,7 @@ export default function ItemsAndSettingsScreen() {
       headerImage={<Ionicons size={310} name="settings" style={styles.headerImage} />}>
         {page == "Main" &&
           <>
-          <ThemedView style={styles.titleContainer}>
+          <ThemedView style={styles.headerContainer}>
             <ThemedText type="title">Settings</ThemedText>
           </ThemedView>
           <Option title={'Items'} toPage={'Items'} icon={"bag"} iconColor={theme == "light"? "black": "white"} setPage={changePage}></Option>
@@ -46,14 +46,16 @@ export default function ItemsAndSettingsScreen() {
             <ThemedView style={styles.backButton}>
             <Option title={'Back'} toPage={'Main'} icon={"chevron-back"} forwardIcon={false} iconColor={theme == "light"? "black": "white"} setPage={changePage}></Option>
             </ThemedView>
-            <ThemedView style={styles.titleContainer}>
+            <ThemedView style={styles.headerContainer}>
               <ThemedText type="title">Items</ThemedText>
             </ThemedView>
             {data?.items.map((item: GroceryItem) => 
               <ThemedView  key={"item" + item.ID} style={styles.titleContainer}>
                 <Item ID={item.ID} item={item}></Item>
-                <EditItemModal item={item} saveItem={data.saveEditedItem} iconType='pencil' units={data.units}></EditItemModal>
-                <DeleteItemModal item={item} deleteItem={data.deleteItem} iconType='trash'></DeleteItemModal>
+                <ThemedView style={styles.buttonContainer}>
+                  <EditItemModal item={item} saveItem={data.saveEditedItem} iconType='pencil' units={data.units}></EditItemModal>
+                  <DeleteItemModal item={item} deleteItem={data.deleteItem} iconType='trash'></DeleteItemModal>
+                </ThemedView>
               </ThemedView>
             )}
             <ThemedView  key={"item0"} style={styles.titleContainer}>
@@ -67,14 +69,16 @@ export default function ItemsAndSettingsScreen() {
             <ThemedView style={styles.backButton}>
             <Option title={'Back'} toPage={'Main'} icon={"chevron-back"} forwardIcon={false} iconColor={theme == "light"? "black": "white"} setPage={changePage}></Option>
             </ThemedView>
-            <ThemedView style={styles.titleContainer}>
-              <ThemedText type="title">Items</ThemedText>
+            <ThemedView style={styles.headerContainer}>
+              <ThemedText type="title">Units</ThemedText>
             </ThemedView>
             {data?.units.map((unit: ItemMeasureUnit) => 
               <ThemedView  key={"units" + unit.ID} style={styles.titleContainer}>
                 <Item ID={unit.ID} item={unit}></Item>
-                <EditUnitModal unit={unit} saveItem={data.saveEditedUnit} iconType='pencil'></EditUnitModal>
-                <DeleteUnitModal unit={unit} deleteunit={data.deleteUnit} iconType='trash'></DeleteUnitModal>
+                <ThemedView style={styles.buttonContainer}>
+                  <EditUnitModal unit={unit} saveItem={data.saveEditedUnit} iconType='pencil'></EditUnitModal>
+                  <DeleteUnitModal unit={unit} deleteunit={data.deleteUnit} iconType='trash'></DeleteUnitModal>
+                </ThemedView>
               </ThemedView>
             )}
             <ThemedView  key={"unit0"} style={styles.titleContainer}>
@@ -163,14 +167,31 @@ const styles = StyleSheet.create({
     left: -35,
     position: 'absolute',
   },
-  titleContainer: {
+  headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: "100%",
+    alignItems: 'center',
+    paddingHorizontal: 3,
+  },
+  titleContainer: {
+    backgroundColor: '#2b2929',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: "100%",
+    alignItems: 'center',
+    paddingHorizontal: 3,
+    borderRadius: 10
+  },
+  buttonContainer: {
+    backgroundColor: '#2b2929',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 3,
   },
   backButton: {
     borderBottomColor: "red",
     borderBottomWidth: 2,
-    paddingBottom: 10
+    paddingBottom: 10,
   }
 });

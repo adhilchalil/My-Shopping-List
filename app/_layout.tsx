@@ -45,11 +45,17 @@ export default function RootLayout() {
       ID: 1,
       name: "Kilogram",
       shortName: "Kg",
+      subUnitName: "gram",
+      subUnitShortName: "gm",
+      subUnitRatio: 1000
     },
     {
       ID: 2,
       name: "Meters",
       shortName: "m",
+      subUnitName: "centimeters",
+      subUnitShortName: "cm",
+      subUnitRatio: 100
     },
   ]);
 
@@ -113,12 +119,15 @@ export default function RootLayout() {
     setItems(itemList);
   };
 
-  const createNewUnit = (name: string, shortName: string) =>{
+  const createNewUnit = (name: string, shortName: string, subUnitName: string, subUnitShortName: string, subUnitRatio: number) =>{
     let unitList = [...units];
     unitList.push({
       ID: units.length+1,
       name: name,
-      shortName: shortName
+      shortName: shortName,
+      subUnitName: subUnitName,
+      subUnitShortName: subUnitShortName,
+      subUnitRatio: subUnitRatio
     })
     setUnits(unitList);
   };
