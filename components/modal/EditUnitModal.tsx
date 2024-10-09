@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, {ComponentProps, useEffect, useState} from 'react';
 import {Alert, Modal, StyleSheet, Text, Pressable, View} from 'react-native';
-import { TextInput } from 'react-native-gesture-handler';
-import { ThemedText } from '../ThemedText';
+import { TextInput } from 'react-native';
 import { ThemedView } from '../ThemedView';
 import ItemMeasureUnit from '@/models/itemMeasreUnitModel';
 
@@ -62,7 +61,7 @@ const EditUnitModal = ({unit, saveItem, iconType}: {unit: ItemMeasureUnit} & {sa
             <View style={styles.buttonsSection}>
                 <Pressable
                     style={[styles.button, styles.buttonClose]}
-                    onPress={() => {saveItem(name, shortName);setModalVisible(!modalVisible)}}>
+                    onPress={() => {saveItem(unit.ID, name, shortName, subUnitName, subUnitShortName, subUnitRatio);setModalVisible(!modalVisible)}}>
                 <Text style={styles.textStyle}>Save</Text>
                 </Pressable>
                 <Pressable
@@ -95,7 +94,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 22,
+        marginVertical: 11,
     },
     modalView: {
         margin: 20,

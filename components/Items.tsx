@@ -1,18 +1,18 @@
-import { StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
+import { StyleProp, StyleSheet, TouchableOpacity, useColorScheme, ViewStyle } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from './ThemedText';
 import GroceryItem from '@/models/groceryItemModel';
 import ItemMeasureUnit from '@/models/itemMeasreUnitModel';
 
-export function Item({ ID, item}: { item: GroceryItem | ItemMeasureUnit} & {ID: number}) {
+export function Item({ style, ID, item}: {style: StyleProp<ViewStyle>} & { item: GroceryItem | ItemMeasureUnit} & {ID: number}) {
   const theme = useColorScheme() ?? 'light';
 
   return (
-    <ThemedView>
+    <ThemedView style={[style,styles.itemStyle]}>
       <TouchableOpacity
         style={styles.heading}
         activeOpacity={0.8}>
-        <ThemedText type="subtitle">{item.name}</ThemedText>
+        <ThemedText style={styles.textStyle} type="subtitle">{item.name}</ThemedText>
       </TouchableOpacity>
     </ThemedView>
   );
@@ -20,10 +20,14 @@ export function Item({ ID, item}: { item: GroceryItem | ItemMeasureUnit} & {ID: 
 
 const styles = StyleSheet.create({
   heading: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: "#2b2929"
+    justifyContent: 'flex-start',
   },
+  itemStyle: {
+    backgroundColor: 'none',
+    alignItems: 'flex-start'
+  },
+  textStyle:{
+    flexWrap: 'wrap'
+  }
 });

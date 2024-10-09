@@ -1,64 +1,237 @@
-import { enablePromise, openDatabase, SQLiteDatabase } from 'react-native-sqlite-storage';
+import { openDatabaseAsync, SQLiteDatabase } from 'expo-sqlite';
 import GroceryItem from '@/models/groceryItemModel';
+import shoppingItem from '@/models/shoppingItemModel';
+import ItemMeasureUnit from '@/models/itemMeasreUnitModel';
 
 const groceryTableName = 'groceryData';
-const shoppingListTableName = "shoppinglistData";
+const shoppingListTableName = "shoppedlistData";
+const itemMeasureUnitTableName = "measureUnitsData";
+const groceryItemModel = new GroceryItem();
+const shoppingItemModel = new shoppingItem();
+const ItemMeasureUnitModel = new ItemMeasureUnit();
 
-enablePromise(true);
+const spreadModelProperties = (object: any, type: string) => {
+  let keys = "";
+  for (const [key, value] of Object.entries(object)) {
+    if(key != "ID"){
+      if(type == "key"){
+        keys += String(key) + ", "; 
+      }
+      else if(type == "value"){
+        keys += String( typeof value == "string"? `'${value}'`: `${value}`) + `, `; 
+      }
+      else if(type == "key&value"){
+        keys += String(key) + " = " + String(typeof value == "string"? `'${value}'`: `${value}`) + `, `;
+      }
+    }
+  }
+  return keys.length > 2? keys.substring(0, keys.length - 2) : "";
+}
+
+var db: SQLiteDatabase;
 
 export const getDBConnection = async () => {
-  return openDatabase({ name: 'grocery-data.db', location: 'default' });
+  db = await openDatabaseAsync('grocery-data.db');
+  await createGroceryItemTable();
+  await createShoppingListTable();
+  await createItemMeasureUnit();
 };
 
-export const createGroceryItemTable = async (db: SQLiteDatabase) => {
+export const createGroceryItemTable = async () => {
+  if(db == undefined){
+    await getDBConnection();
+  }
   // create table if not exists
+  console.log(`creating if not exists ${groceryTableName}`)
   const query = `CREATE TABLE IF NOT EXISTS ${groceryTableName}(
-        name varchar(255) NOT NULL,unit varchar(20),useTimePerUnit int NOT NULL
+      ID INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(255),unitID INTEGER NOT NULL,itemClassificationID INTEGER NOT NULL,useTimePerUnit INTEGER NOT NULL
     );`;
-
-  await db.executeSql(query);
+  await db.execAsync(query);
 };
 
-export const createShoppingListTable = async (db: SQLiteDatabase) => {
-    // create table if not exists
-    const query = `CREATE TABLE IF NOT EXISTS ${shoppingListTableName}(
-            itemID int, name varchar(255) NOT NULL,unit varchar(20),useTimePerUnit int NOT NULL
-        );`;
-
-    await db.executeSql(query);
+export const createShoppingListTable = async () => {
+  // create table if not exists
+  if(db == undefined){
+    await getDBConnection();
+  }
+  console.log(`creating if not exists ${shoppingListTableName}`)
+  const query = `CREATE TABLE IF NOT EXISTS ${shoppingListTableName}(
+    ID INTEGER PRIMARY KEY AUTOINCREMENT, itemID INTEGER NOT NULL,purchaseAmount INTEGER NOT NULL,purchaseDate DATE
+  );`;
+  await db.execAsync(query);
 };
 
-export const getGroceryItems = async (db: SQLiteDatabase): Promise<GroceryItem[]> => {
-    try {
-      const groceryItems: GroceryItem[] = [];
-      const results = await db.executeSql(`SELECT * FROM ${groceryTableName}`);
-      results.forEach(result => {
-        for (let index = 0; index < result.rows.length; index++) {
-          groceryItems.push(result.rows.item(index))
-        }
-      });
-      return groceryItems;
-    } catch (error) {
-      console.error(error);
-      throw Error('Failed to get groceryItems !!!');
+export const createItemMeasureUnit = async () => {
+  // create table if not exists
+  if(db == undefined){
+    await getDBConnection();
+  }
+  console.log(`creating if not exists ${itemMeasureUnitTableName}`)
+  const query = `CREATE TABLE IF NOT EXISTS ${itemMeasureUnitTableName}(
+      ID INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(255), shortName varchar(255), subUnitName varchar(255), subUnitShortName varchar(255),subUnitRatio INTEGER NOT NULL
+    );`;
+  await db.execAsync(query);
+};
+
+
+/*-------------------------GROCERY ITEMS TABLE------------------------------------------*/
+export const getGroceryItems = async (): Promise<GroceryItem[]> => {
+  try {
+    if(db == undefined){
+      await getDBConnection();
     }
-  };
-  
-  export const saveGroceryItems = async (db: SQLiteDatabase, groceryItems: GroceryItem[]) => {
-    const insertQuery =
-      `INSERT OR REPLACE INTO ${groceryTableName}(rowid, value) values` +
-      groceryItems.map(i => `(${i.ID}, '${i.name}')`).join(',');
-  
-    return db.executeSql(insertQuery);
-  };
-  
-  export const deleteGroceryItem = async (db: SQLiteDatabase, id: number) => {
-    const deleteQuery = `DELETE from ${groceryTableName} where rowid = ${id}`;
-    await db.executeSql(deleteQuery);
-  };
-  
-  export const deleteTable = async (db: SQLiteDatabase) => {
-    const query = `drop table ${groceryTableName}`;
-  
-    await db.executeSql(query);
-  };
+    const groceryItems: GroceryItem[] = [];
+    await db.getAllAsync(`SELECT * FROM ${groceryTableName}`).then((results: any) => {
+      results.forEach((result: any) => {
+        groceryItems.push(result);
+      });
+    })
+    
+    return groceryItems;
+  } catch (error) {
+    console.error(error);
+    throw Error('Failed to get groceryItems !!!');
+  }
+};
+
+export const saveGroceryItems = async (groceryItems: GroceryItem[]) => {
+  if(db == undefined){
+    await getDBConnection();
+  }
+  const insertQuery =
+    `INSERT OR REPLACE INTO ${groceryTableName} (` + spreadModelProperties(groceryItemModel, "key") + `) values` +
+    groceryItems.map(item => `(${spreadModelProperties(item, "value")})`).join(',');
+    console.log("Query",insertQuery); 
+  return db.runAsync(insertQuery);
+};
+
+export const updateGroceryItems = async (id: number, GroceryItems: GroceryItem) => {
+  if(db == undefined){
+    await getDBConnection();
+  }
+  const insertQuery =
+    `UPDATE ${groceryTableName} SET ${spreadModelProperties(GroceryItems, "key&value")} where ID=${id}`;
+  return db.execAsync(insertQuery);
+};
+
+export const deleteGroceryItem = async (id: number) => {
+  if(db == undefined){
+    await getDBConnection();
+  }
+  const deleteQuery = `DELETE from ${groceryTableName} where ID = ${id}`;
+  await db.execAsync(deleteQuery);
+};
+
+export const deleteGroceryTable = async () => {
+  if(db == undefined){
+    await getDBConnection();
+  }
+  console.log(`deleting table ${groceryTableName}`);
+  const query = `drop table ${groceryTableName}`;
+  await db.execAsync(query);
+};
+
+/*-------------------------SHOPPED ITEMS TABLE------------------------------------------*/
+export const getShoppedItems = async (): Promise<shoppingItem[]> => {
+  try {
+    if(db == undefined){
+      await getDBConnection();
+    }
+    const shoppedItems: shoppingItem[] = [];
+    await db.getAllAsync(`SELECT * FROM ${shoppingListTableName}`).then((results: any) => {
+      results.forEach((result: any) => {
+        shoppedItems.push(result);
+      });
+    })
+    
+    return shoppedItems;
+  } catch (error) {
+    console.error(error);
+    throw Error('Failed to get groceryItems !!!');
+  }
+};
+
+export const saveShoppedItems = async (ShoppedItems: shoppingItem[]) => {
+  if(db == undefined){
+    await getDBConnection();
+  }
+  const insertQuery =
+    `INSERT OR REPLACE INTO ${shoppingListTableName} (` + spreadModelProperties(shoppingItemModel, "key") + `) values ` +
+    ShoppedItems.map(item => `(${spreadModelProperties(item, "value")})`).join(',');
+  return db.runAsync(insertQuery);
+};
+
+export const deleteShoppedItem = async (id: number) => {
+  if(db == undefined){
+    await getDBConnection();
+  }
+  const deleteQuery = `DELETE from ${shoppingListTableName} where ID = ${id}`;
+  await db.execAsync(deleteQuery);
+};
+
+export const deleteShoppedTable = async () => {
+  if(db == undefined){
+    await getDBConnection();
+  }
+  console.log(`deleting table ${shoppingListTableName}`);
+  const query = `drop table ${shoppingListTableName}`;
+  await db.execAsync(query);
+};
+
+/*-------------------------ITEM MEASUREMENT UNITS TABLE------------------------------------------*/
+export const getItemMeasureUnits = async (): Promise<ItemMeasureUnit[]> => {
+  try {
+    if(db == undefined){
+      await getDBConnection();
+    }
+    const itemMeasureUnits: ItemMeasureUnit[] = [];
+    await db.getAllAsync(`SELECT * FROM ${itemMeasureUnitTableName}`).then((results: any) => {
+      results.forEach((result: any) => {
+        itemMeasureUnits.push(result)
+      });
+    })
+    
+    return itemMeasureUnits;
+  } catch (error) {
+    console.error(error);
+    throw Error('Failed to get groceryItems !!!');
+  }
+};
+
+export const saveItemMeasureUnits = async (itemMeasureUnits: ItemMeasureUnit[]) => {
+  if(db == undefined){
+    await getDBConnection();
+  }
+  const insertQuery =
+    `INSERT OR REPLACE INTO ${itemMeasureUnitTableName} (` + spreadModelProperties(ItemMeasureUnitModel, "key") + `) values ` +
+    itemMeasureUnits.map(item => `(${spreadModelProperties(item, "value")})`).join(',');
+    console.log("Query",insertQuery);
+  return db.runAsync(insertQuery);
+};
+
+export const updateItemMeasureUnits = async (id: number, itemMeasureUnits: ItemMeasureUnit) => {
+  if(db == undefined){
+    await getDBConnection();
+  }
+  const insertQuery =
+    `UPDATE ${itemMeasureUnitTableName} SET ` + `${spreadModelProperties(itemMeasureUnits, "key&value")} where ID=${id}`;
+  return db.execAsync(insertQuery);
+};
+
+export const deleteItemMeasureUnit = async (id: number) => {
+  if(db == undefined){
+    await getDBConnection();
+  }
+  const deleteQuery = `DELETE from ${itemMeasureUnitTableName} where ID = ${id}`;
+  await db.execAsync(deleteQuery);
+};
+
+export const deleteItemMeasureUnitTable = async () => {
+  if(db == undefined){
+    await getDBConnection();
+  }
+  console.log(`deleting table ${itemMeasureUnitTableName}`);
+  const query = `drop table ${itemMeasureUnitTableName}`;
+  await db.execAsync(query);
+};
+

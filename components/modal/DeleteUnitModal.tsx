@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, {ComponentProps, useEffect, useState} from 'react';
 import {Alert, Modal, StyleSheet, Text, Pressable, View} from 'react-native';
-import { ThemedText } from '../ThemedText';
 import { ThemedView } from '../ThemedView';
 import ItemMeasureUnit from '@/models/itemMeasreUnitModel';
 
@@ -57,7 +56,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 22,
+        marginVertical: 11,
     },
     modalView: {
         margin: 20,

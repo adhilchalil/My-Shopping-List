@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { ThemedText } from "./ThemedText";
-import { TextInput } from "react-native";
+import { StyleProp, TextInput, View, ViewStyle } from "react-native";
 import shoppingItemFull from "@/models/shoppingItemFullModel";
 import { StyleSheet } from 'react-native';
 
-export default function ShoppingItemInput({item, editShoppingItem, index, editable}: {item: shoppingItemFull} & {editShoppingItem: any} & {index: number} & {editable: boolean}) {
+export default function ShoppingItemInput({style, item, editShoppingItem, index, editable}:{style: StyleProp<ViewStyle>} & {item: shoppingItemFull} & {editShoppingItem: any} & {index: number} & {editable: boolean}) {
     const [blur, setBlur] = useState(true);
     const [purchaseAmount, setPurchaseAmount] = useState(String(item.purchaseAmount));
     const inputElement = useRef<TextInput>(null);
@@ -26,14 +26,14 @@ export default function ShoppingItemInput({item, editShoppingItem, index, editab
       setPurchaseAmount(String(item.purchaseAmount));
     }, [item])
 
-    return (editable && !blur?
-    <>
-      <ThemedText type="subtitle">
-        {item.GroceryItem?.name}asdsa
+    return <View style={[style, styles.viewStyle]}>
+      <ThemedText style={styles.textStyle} type="subtitle">
+        {item.GroceryItem?.name}
       </ThemedText>
-      <ThemedText type="subtitle">
+      {editable && !blur?
+      <>
         <TextInput 
-          style={styles.textInput}
+          style={[styles.textInput,styles.textInputWrap]}
           keyboardType='numeric'
           onChangeText={(amount) => setPurchaseAmount(amount)}
           value={purchaseAmount}
@@ -43,32 +43,38 @@ export default function ShoppingItemInput({item, editShoppingItem, index, editab
           maxLength={10}
           ref={inputElement}
         />
-        {item.GroceryItem?.ItemMeasureUnit.shortName}
-      </ThemedText>
-    </>:
-    <>
-      <ThemedText type="subtitle">
-        {item.GroceryItem?.name}
-      </ThemedText>
-      <ThemedText type="subtitle" onPress={() => setBlur(false)}>
+        <ThemedText type="subtitle" style={styles.textInputWrap}>
+          {item.GroceryItem?.ItemMeasureUnit.shortName}
+        </ThemedText>
+      </>:
+      <ThemedText style={styles.textStyle} type="subtitle" onPress={() => setBlur(false)}>
         {Math.floor(item.purchaseAmount)} {item.GroceryItem?.ItemMeasureUnit.shortName}
         {" "}
         {item.purchaseAmount%1 > 0?
           (Math.round((item.purchaseAmount%1)*item.GroceryItem.ItemMeasureUnit.subUnitRatio))
           + " " + (item.GroceryItem?.ItemMeasureUnit.subUnitShortName)
         :""}
-      </ThemedText>
-    </>);
+      </ThemedText>}
+    </View>
 }
 
 const styles = StyleSheet.create({
+    viewStyle:{
+      width: '80%',
+      flexDirection: 'row',
+      justifyContent: 'space-between'
+    },
     textInput:{
-      color: 'white'
+      color: 'white',
+      padding: 0,
+      margin: 0,
+      fontSize: 20,
+      fontWeight: 'bold',
     },
     titleContainer: {
       backgroundColor: '#2b2929',
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      // justifyContent: 'space-between',
       width: "100%",
       alignItems: 'center',
       paddingHorizontal: 10,
@@ -76,7 +82,12 @@ const styles = StyleSheet.create({
     },
     textStyle: {
       color: 'white',
+      flexWrap: 'wrap',
       fontWeight: 'bold',
       textAlign: 'center',
+      marginVertical:10,
     },
+    textInputWrap: {
+      marginVertical: 10
+    }
   });

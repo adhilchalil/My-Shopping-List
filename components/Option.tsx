@@ -21,7 +21,7 @@ export function Option({ title, toPage, icon, forwardIcon=true , iconColor, setP
           <OptionIcon name={icon ? icon : 'home-outline'} color={iconColor}/>
           <ThemedText  style={styles.content} type="defaultSemiBold">{title}</ThemedText>
         </TouchableOpacity>
-        {forwardIcon? <OptionIcon style={styles.content} name={'chevron-forward'} color={iconColor}/>:""}
+        {forwardIcon && <OptionIcon style={styles.content} name={'chevron-forward'} color={iconColor}/>}
       </TouchableOpacity>
     </ThemedView>
   );

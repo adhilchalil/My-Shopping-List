@@ -13,6 +13,7 @@ import ItemMeasureUnit from '@/models/itemMeasreUnitModel';
 import DeleteUnitModal from '@/components/modal/DeleteUnitModal';
 import DeleteItemModal from '@/components/modal/DeleteItemModal';
 import { AllDataContext } from '@/app/_layout';
+import { deleteGroceryTable, deleteItemMeasureUnitTable } from '@/components/db-service';
 
 export default function ItemsAndSettingsScreen() {
   const [page, setPage] = useState("Main");
@@ -49,9 +50,12 @@ export default function ItemsAndSettingsScreen() {
             <ThemedView style={styles.headerContainer}>
               <ThemedText type="title">Items</ThemedText>
             </ThemedView>
+            {/* <ThemedView style={styles.headerContainer}>
+              <ThemedText onPress={() => deleteGroceryTable()} type="title">Delete Items Table</ThemedText>
+            </ThemedView> */}
             {data?.items.map((item: GroceryItem) => 
               <ThemedView  key={"item" + item.ID} style={styles.titleContainer}>
-                <Item ID={item.ID} item={item}></Item>
+                <Item style={styles.itemStyle} ID={item.ID} item={item}></Item>
                 <ThemedView style={styles.buttonContainer}>
                   <EditItemModal item={item} saveItem={data.saveEditedItem} iconType='pencil' units={data.units}></EditItemModal>
                   <DeleteItemModal item={item} deleteItem={data.deleteItem} iconType='trash'></DeleteItemModal>
@@ -59,7 +63,7 @@ export default function ItemsAndSettingsScreen() {
               </ThemedView>
             )}
             <ThemedView  key={"item0"} style={styles.titleContainer}>
-              <Item ID={0} item={newItem}></Item>
+              {/* <Item  style={styles.itemStyle} ID={0} item={newItem}></Item> */}
               <EditItemModal item={newItem} saveItem={data.createNewItem} iconType='add' units={data.units}></EditItemModal>
             </ThemedView>
           </>
@@ -72,9 +76,12 @@ export default function ItemsAndSettingsScreen() {
             <ThemedView style={styles.headerContainer}>
               <ThemedText type="title">Units</ThemedText>
             </ThemedView>
+            {/* <ThemedView style={styles.headerContainer}>
+              <ThemedText onPress={() => deleteItemMeasureUnitTable()} type="title">Delete Units Table</ThemedText>
+            </ThemedView> */}
             {data?.units.map((unit: ItemMeasureUnit) => 
               <ThemedView  key={"units" + unit.ID} style={styles.titleContainer}>
-                <Item ID={unit.ID} item={unit}></Item>
+                <Item style={styles.itemStyle} ID={unit.ID} item={unit}></Item>
                 <ThemedView style={styles.buttonContainer}>
                   <EditUnitModal unit={unit} saveItem={data.saveEditedUnit} iconType='pencil'></EditUnitModal>
                   <DeleteUnitModal unit={unit} deleteunit={data.deleteUnit} iconType='trash'></DeleteUnitModal>
@@ -82,7 +89,7 @@ export default function ItemsAndSettingsScreen() {
               </ThemedView>
             )}
             <ThemedView  key={"unit0"} style={styles.titleContainer}>
-              <Item ID={0} item={newItem}></Item>
+              {/* <Item style={styles.itemStyle} ID={0} item={newItem}></Item> */}
               <EditUnitModal unit={newUnit} saveItem={data.createNewUnit} iconType='add'></EditUnitModal>
             </ThemedView>
           </>
@@ -177,21 +184,25 @@ const styles = StyleSheet.create({
   titleContainer: {
     backgroundColor: '#2b2929',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     width: "100%",
     alignItems: 'center',
     paddingHorizontal: 3,
     borderRadius: 10
   },
   buttonContainer: {
-    backgroundColor: '#2b2929',
+    width: '30%',
+    backgroundColor: 'none',
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 3,
+    gap: 5,
   },
   backButton: {
     borderBottomColor: "red",
     borderBottomWidth: 2,
     paddingBottom: 10,
+  },
+  itemStyle: {
+    width: '70%'
   }
 });

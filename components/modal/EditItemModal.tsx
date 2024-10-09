@@ -2,13 +2,12 @@ import GroceryItem from '@/models/groceryItemModel';
 import { Ionicons } from '@expo/vector-icons';
 import React, {ComponentProps, useEffect, useState} from 'react';
 import {Alert, Modal, StyleSheet, Text, Pressable, View} from 'react-native';
-import { TextInput } from 'react-native-gesture-handler';
-import { ThemedText } from '../ThemedText';
+import { TextInput } from 'react-native';
 import { ThemedView } from '../ThemedView';
 import ItemMeasureUnit from '@/models/itemMeasreUnitModel';
 import SelectDropdown from 'react-native-select-dropdown';
 
-const EditItemModal = ({item, saveItem, iconType, units}: {item: GroceryItem} & {saveItem: any} & {units: ItemMeasureUnit[]} & {iconType: ComponentProps<typeof Ionicons>['name'] }) => {
+const EditItemModal = ({item, saveItem, iconType, units}: {item: GroceryItem} & {saveItem: (ID:number, name: string, unitID:number, itemClassificationID:number, useTimePerUnit:number ) => void} & {units: ItemMeasureUnit[]} & {iconType: ComponentProps<typeof Ionicons>['name'] }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [name, setName] = useState(item.name);
   const [unit, setUnit] = useState(item.unitID);
@@ -69,7 +68,7 @@ const EditItemModal = ({item, saveItem, iconType, units}: {item: GroceryItem} & 
             <View style={styles.buttonsSection}>
                 <Pressable
                     style={[styles.button, styles.buttonClose]}
-                    onPress={() => {saveItem(name, unit, useTimePerUnit);setModalVisible(!modalVisible)}}>
+                    onPress={() => {saveItem(item.ID, name, unit, 0, useTimePerUnit);setModalVisible(!modalVisible)}}>
                 <Text style={styles.textStyle}>Save</Text>
                 </Pressable>
                 <Pressable
@@ -102,7 +101,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 22,
+        marginVertical: 11,
     },
     modalView: {
         margin: 20,

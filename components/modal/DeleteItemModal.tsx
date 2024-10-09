@@ -2,11 +2,7 @@ import GroceryItem from '@/models/groceryItemModel';
 import { Ionicons } from '@expo/vector-icons';
 import React, {ComponentProps, useEffect, useState} from 'react';
 import {Alert, Modal, StyleSheet, Text, Pressable, View} from 'react-native';
-import { TextInput } from 'react-native-gesture-handler';
-import { ThemedText } from '../ThemedText';
 import { ThemedView } from '../ThemedView';
-import ItemMeasureUnit from '@/models/itemMeasreUnitModel';
-import SelectDropdown from 'react-native-select-dropdown';
 
 const DeleteItemModal = ({item, deleteItem, iconType}: {item: GroceryItem} & {deleteItem: any} & {iconType: ComponentProps<typeof Ionicons>['name'] }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -60,7 +56,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 22,
+        marginVertical: 11,
     },
     modalView: {
         margin: 20,

@@ -12,6 +12,7 @@ import shoppingItemFull from '@/models/shoppingItemFullModel';
 import GroceryItemFull from '@/models/groceryItemFullModel';
 import ItemMeasureUnit from '@/models/itemMeasreUnitModel';
 import ShoppingItemInput from '@/components/ShoppingItemInput';
+import { deleteShoppedTable } from '@/components/db-service';
 
 export default function ShoppingListScreen() {
 
@@ -35,7 +36,6 @@ export default function ShoppingListScreen() {
     let itemUnitArr = units.filter((unit: ItemMeasureUnit) => item.unitID == unit.ID);
     let itemUnit: ItemMeasureUnit = itemUnitArr?.length? itemUnitArr[0] : new ItemMeasureUnit();
     let groceryItemFull = new GroceryItemFull(itemUnit, item.ID, item.name, item.unitID, item.itemClassificationID, item.useTimePerUnit);
-    console.log(item, units, itemUnitArr, itemUnit, groceryItemFull);
     let shoppingItemAdd: shoppingItemFull = {
       ID: IDCalculated,
       itemID: item.ID,
@@ -60,7 +60,6 @@ export default function ShoppingListScreen() {
     let amountValArr = amount.replace(/[^0-9.]/g, '').split(".");
     let findDecimalPoint = amount.indexOf(".");
     let amountVal = Number(amountValArr[0] +  (findDecimalPoint > 0? "." + (amountValArr.length > 1?amountValArr[1] : "0"):""));
-    console.log("edit", amountVal)
     let tempShoppingList = [...shoppingItems];
     if(item.ID == tempShoppingList[index].ID){
       tempShoppingList[index].purchaseAmount = amountVal;
@@ -74,7 +73,6 @@ export default function ShoppingListScreen() {
 
   let setShoppingList = (async (data: any[]) => {
     await AsyncStorage.setItem('my-shopping-list-shoplistitems', JSON.stringify(data));
-    console.log(data);
     setShoppingItems(data);
   })
 
@@ -134,9 +132,13 @@ export default function ShoppingListScreen() {
       <ThemedView style={styles.headerContainer}>
         <ThemedText type="title">My Shopping List</ThemedText>
       </ThemedView>
+      {/* <ThemedView style={styles.headerContainer}>
+        <ThemedText onPress={() => deleteShoppedTable()} type="title">Delete Shopped items Table</ThemedText>
+      </ThemedView> */}
       {shoppingItems.length? shoppingItems?.map((item: shoppingItemFull, index) => 
         <ThemedView  key={"shoppingItem" + item.ID} style={styles.titleContainer}>
           <ShoppingItemInput
+            style={styles.shoppingInput}
             item = {item}
             editShoppingItem={editShoppingItem}
             index ={index}
@@ -162,7 +164,7 @@ export default function ShoppingListScreen() {
       </ThemedView>
       {recommendations.length? recommendations?.map((item: GroceryItem) => 
       <ThemedView  key={"recommendedItem" + item.ID} style={styles.titleContainer}>
-        <Item ID={item.ID} item={item}></Item>
+        <Item style={styles.itemStyle} ID={item.ID} item={item}></Item>
         <ThemedText style={styles.buttonContainer} type="subtitle">
           <Ionicons size={18} name={'checkmark-circle'} onPress={() => {moveToShoppingList(item)}}></Ionicons>
         </ThemedText>
@@ -213,7 +215,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: "100%",
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     borderRadius: 10
   },
   textStyle: {
@@ -221,4 +223,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  itemStyle: {
+    // width: '90%'
+  },
+  shoppingInput: {
+
+  }
 });

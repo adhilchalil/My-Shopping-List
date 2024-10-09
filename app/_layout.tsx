@@ -9,9 +9,12 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import shoppingItem from '@/models/shoppingItemModel';
+import { deleteGroceryItem, deleteItemMeasureUnit, getDBConnection, getGroceryItems, getItemMeasureUnits, getShoppedItems, saveGroceryItems, saveItemMeasureUnits, updateGroceryItems, updateItemMeasureUnits } from '@/components/db-service';
+import { SQLiteDatabase } from 'expo-sqlite';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+var database: SQLiteDatabase;
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -59,20 +62,7 @@ export default function RootLayout() {
     },
   ]);
 
-  let dasd = new Date();
-  dasd.setDate(dasd.getDate() - 8);
-  console.log("date",dasd)
-  const [shoppedItems, setShoppedItems] = useState<shoppingItem[]>([
-    {
-      ID: 1,
-      itemID: 1,
-      purchaseAmount: 2,
-      purchaseDate: dasd
-    },
-  ]);
-
-  let newItem = new GroceryItem();
-  let newUnit = new ItemMeasureUnit();
+  const [shoppedItems, setShoppedItems] = useState<shoppingItem[]>([]);
 
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -81,6 +71,17 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
+      (async() => {
+        let tempUnits = await getItemMeasureUnits();
+        setUnits(tempUnits);
+        console.log("db units", tempUnits);
+        let tempShoppedItems = await getShoppedItems();
+        console.log("db shopped Items", tempShoppedItems);
+        setShoppedItems(tempShoppedItems);
+        let tempGroceryItems = await getGroceryItems();
+        console.log("db grocery items", tempGroceryItems);
+        setItems(tempGroceryItems);
+      })()
     }
   }, [loaded]);
 
@@ -88,63 +89,92 @@ export default function RootLayout() {
     return null;
   }
 
-  const createNewItem = (name: string, unit: number, useTimePerUnit: number) =>{
+  const createNewItem = async(ID: number, name: string, unitID: number, itemClassificationID: number, useTimePerUnit: number) =>{
     let itemList = [...items];
-    itemList.push({
-      ID: items.length+1,
-      name: name,
-      unitID: unit,
-      useTimePerUnit: useTimePerUnit,
-      itemClassificationID: 0
+    let newGroceryItems = [new GroceryItem(0, name, unitID, itemClassificationID, useTimePerUnit)];
+    console.log("creating items", newGroceryItems, name, unitID, useTimePerUnit);
+    let resp = saveGroceryItems(newGroceryItems).then((resp) => {
+      console.log("created item", resp.lastInsertRowId);
+      itemList.push({
+        ID: resp.lastInsertRowId,
+        name: name,
+        unitID: unitID,
+        useTimePerUnit: useTimePerUnit,
+        itemClassificationID: itemClassificationID
+      })
+      setItems(itemList);
     })
-    setItems(itemList);
-    newItem = new GroceryItem();
   };
 
-  const saveEditedItem = (ID: number, name: string, unitID: number, useTimePerUnit: number) => {
+  const saveEditedItem = async(ID: number, name: string, unitID: number, itemClassificationID: number, useTimePerUnit: number) => {
     let itemList = [...items];
-    let index = itemList.findIndex((item) => item.ID == ID && item.name == name);
+    let index = itemList.findIndex((item) => item.ID == ID);
+    let editGroceryItems = new GroceryItem(ID, name, unitID, itemClassificationID, useTimePerUnit);
     if(index != -1){
-      itemList.splice(index,1);
+      let resp = await updateGroceryItems(ID, editGroceryItems).then(() => {
+        itemList.splice(index,1, editGroceryItems);
+        setItems(itemList);
+      });
     }
-    setItems(itemList);
+    else console.log("Couldnt find item to Edit");
   }
 
   const deleteItem= (ID: number, name: string) => {
     let itemList = [...items];
     let index = itemList.findIndex((item) => item.ID == ID && item.name == name);
     if(index != -1){
-      itemList.splice(index,1);
+      let resp =  deleteGroceryItem(ID).then(() => {
+        itemList.splice(index,1);
+        setItems(itemList);
+      });
     }
-    setItems(itemList);
+    else console.log("Couldnt find item to Delete");
   };
 
-  const createNewUnit = (name: string, shortName: string, subUnitName: string, subUnitShortName: string, subUnitRatio: number) =>{
+  const createNewUnit = async(ID: number, name: string, shortName: string, subUnitName: string, subUnitShortName: string, subUnitRatio: number) =>{
     let unitList = [...units];
-    unitList.push({
-      ID: units.length+1,
-      name: name,
-      shortName: shortName,
-      subUnitName: subUnitName,
-      subUnitShortName: subUnitShortName,
-      subUnitRatio: subUnitRatio
+    let newItemMeasureUnit = [ new ItemMeasureUnit(ID, name, shortName, subUnitName, subUnitShortName, subUnitRatio)];
+    console.log("creating Unit", newItemMeasureUnit);
+    let resp = await saveItemMeasureUnits(newItemMeasureUnit).then((resp) => {
+      console.log("created Unit", resp);
+      unitList.push({
+        ID: resp.lastInsertRowId,
+        name: name,
+        shortName: shortName,
+        subUnitName: subUnitName,
+        subUnitShortName: subUnitShortName,
+        subUnitRatio: subUnitRatio
+      })
+      setUnits(unitList);
     })
-    setUnits(unitList);
+    .catch((err) => {
+      console.log("Error posting Unit", err);
+    }) 
   };
 
-  const saveEditedUnit = (ID: number, name: string, shortName: string) => {
-
+  const saveEditedUnit = async(ID: number, name: string, shortName: string, subUnitName: string, subUnitShortName: string, subUnitRatio: number) => {
+    let unitList = [...units];
+    let index = unitList.findIndex((item) => item.ID == ID);
+    let editMeasurUnit = new ItemMeasureUnit(ID, name, shortName, subUnitName, subUnitShortName, subUnitRatio);
+    if(index != -1){
+      let resp = await updateItemMeasureUnits(ID, editMeasurUnit).then(() => {
+        unitList.splice(index,1, editMeasurUnit);
+        setUnits(unitList);
+      });
+    }
+    else console.log("Couldnt find Unit to Edit");
   }
 
   const deleteUnit= (ID: number, name: string) => {
     let unitList = [...units];
     let index = unitList.findIndex((unit) => unit.ID == ID && unit.name == name);
-    console.log("deleted", index);
     if(index != -1){
-      unitList.splice(index,1);
+      let resp =  deleteItemMeasureUnit(ID).then(() => {
+        unitList.splice(index,1);
+        setUnits(unitList);
+      });
     }
-    setUnits(unitList);
-    newUnit = new ItemMeasureUnit();
+    else console.log("Couldnt find Unit to Delete");
   };
 
   return (
