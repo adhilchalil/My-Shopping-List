@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Image, Platform, Pressable } from 'react-native';
+import { StyleSheet, Image, Platform, Pressable, Alert } from 'react-native';
 import { Item } from '@/components/Items';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -12,15 +12,18 @@ import shoppingItemFull from '@/models/shoppingItemFullModel';
 import GroceryItemFull from '@/models/groceryItemFullModel';
 import ItemMeasureUnit from '@/models/itemMeasreUnitModel';
 import ShoppingItemInput from '@/components/ShoppingItemInput';
-import { deleteShoppedTable } from '@/components/db-service';
+import { ThemedTextInput } from '@/components/ThemedTextInput';
+import shoppingItem from '@/models/shoppingItemModel';
 
 export default function ShoppingListScreen() {
 
-  const [items, setItems] = useState([]);
-  const [units, setUnits] = useState([]);
+  const [items, setItems] = useState<GroceryItem[]>([]);
+  const [units, setUnits] = useState<ItemMeasureUnit[]>([]);
+  const [search, setSearch] = useState("");
+  const [searchRecommendations, setSearchRecommendations] = useState<GroceryItem[]>([]);
   const [shoppedItems, setShoppedItems] = useState<shoppingItemFull[]>([]);
   const [shoppingItems, setShoppingItems] = useState<shoppingItemFull[]>([]);
-  const [recommendations, setRecommendations] = useState([]);
+  const [recommendations, setRecommendations] = useState<GroceryItem[]>([]);
   const [recommend, setRecommend] = useState(false);
 
   const data : any = useContext(AllDataContext);
@@ -44,8 +47,14 @@ export default function ShoppingListScreen() {
       purchaseDate: new Date()
     };
     let currentShoppingList = [...shoppingItems];
-    currentShoppingList.push(shoppingItemAdd);
-    setShoppingList(currentShoppingList);
+    let itemIndex = currentShoppingList.findIndex((curItem) => curItem.GroceryItem.ID == item.ID)
+    if(itemIndex == -1){
+      currentShoppingList.push(shoppingItemAdd);
+      setShoppingList(currentShoppingList);
+    }
+    else{
+      Alert.alert("Item already added!")
+    }
   };
 
   let removeFromShoppingList = (item: shoppingItemFull, index: number) => {
@@ -101,7 +110,20 @@ export default function ShoppingListScreen() {
       return false;
     });
     setRecommendations(shoppingListGenerated);
-  }
+  };
+
+  useEffect(() => {
+    let searchrecommend: GroceryItem[] = [];
+    if(search?.length > 0){
+      let searchTerm = search.toLowerCase();
+      for(let item of items){
+        if(item.name.toLowerCase().includes(searchTerm)){
+          searchrecommend.push(item);
+        }
+      }
+    }
+    setSearchRecommendations(searchrecommend);
+  }, [search])
 
   useEffect(() => {
     refreshShoppingItems();
@@ -132,9 +154,32 @@ export default function ShoppingListScreen() {
       <ThemedView style={styles.headerContainer}>
         <ThemedText type="title">My Shopping List</ThemedText>
       </ThemedView>
+      <ThemedView style={styles.searchBarView}>
+        <ThemedText style={{verticalAlign: 'middle'}}>
+          <Ionicons size={20} name='search'></Ionicons>
+        </ThemedText>
+        <ThemedTextInput placeholder=' search...' style={styles.searchBar} value={search} onChangeText={setSearch}></ThemedTextInput>
+      </ThemedView>
+
+      {searchRecommendations.length? searchRecommendations?.map((item: GroceryItem) => 
+      <ThemedView  key={"searchedItem" + item.ID} style={styles.titleContainer}>
+        <Item style={styles.itemStyle} ID={item.ID} item={item}></Item>
+        <ThemedText style={styles.buttonContainer} type="subtitle">
+          <Ionicons size={18} name={'checkmark-circle'} onPress={() => {moveToShoppingList(item)}}></Ionicons>
+        </ThemedText>
+      </ThemedView>
+      ): <></>}
+
+      <ThemedView
+        style={{
+          borderBottomColor: 'blue',
+          borderBottomWidth: StyleSheet.hairlineWidth,
+        }}
+      />
       {/* <ThemedView style={styles.headerContainer}>
         <ThemedText onPress={() => deleteShoppedTable()} type="title">Delete Shopped items Table</ThemedText>
       </ThemedView> */}
+
       {shoppingItems.length? shoppingItems?.map((item: shoppingItemFull, index) => 
         <ThemedView  key={"shoppingItem" + item.ID} style={styles.titleContainer}>
           <ShoppingItemInput
@@ -149,19 +194,23 @@ export default function ShoppingListScreen() {
             <Ionicons size={18} name={'remove-circle'} onPress={() => {removeFromShoppingList(item, index)}}></Ionicons>
           </ThemedText>
         </ThemedView>
-      ): <ThemedText style={styles.buttonContainer} type="subtitle">Add items to streamline your shopping!</ThemedText>}
+      ): <ThemedText style={styles.emptyContainer} type="subtitle">Add items to streamline your shopping!</ThemedText>}
           {shoppingItems?.length>0 ? <Pressable
             style={[styles.button]}
             onPress={() => {saveShoppedItems()}}
           >
             <ThemedText style={styles.buttonTextStyle}>
-              <Ionicons size={20} name={'checkmark-circle'} onPress={() => {saveShoppedItems()}}></Ionicons>
+              <ThemedText style={{verticalAlign: 'middle'}}>
+                <Ionicons size={20} name={'checkmark-circle'} onPress={() => {saveShoppedItems()}}></Ionicons>
+              </ThemedText>
               <ThemedText type="subtitle">Done Shopping</ThemedText>
             </ThemedText>
           </Pressable>: ""}
+
       <ThemedView style={styles.headerContainer}>
         <ThemedText type="title">Recommendations</ThemedText>
       </ThemedView>
+
       {recommendations.length? recommendations?.map((item: GroceryItem) => 
       <ThemedView  key={"recommendedItem" + item.ID} style={styles.titleContainer}>
         <Item style={styles.itemStyle} ID={item.ID} item={item}></Item>
@@ -187,11 +236,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  searchBarView:{
+    flexDirection: 'row',
+    width: '100%',
+    fontSize: 20
+  },
+  searchBar:{
+    width: '100%',
+    fontSize: 20
+  },
+  emptyContainer: {
+    backgroundColor: '#2b2929',
+    color: 'yellow',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 3,
+    textAlign: 'center',
+    borderRadius: 20
+  },
   buttonContainer: {
     backgroundColor: '#2b2929',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 3,
+    padding: 3,
   },
   textInput:{
     color: 'white'
