@@ -18,10 +18,16 @@ const spreadModelProperties = (object: any, type: string) => {
         keys += String(key) + ", "; 
       }
       else if(type == "value"){
-        keys += String( typeof value == "string"? `'${value}'`: `${value}`) + `, `; 
+        let valueModified = value;
+        console.log(key, typeof(value));
+        if(typeof(value) == "object"){
+          let valueModified : Date | any = value;
+          console.log("DateValue", valueModified.toUTCString());
+        }
+        keys += String(typeof value == "string" || typeof value == "object"? `'${value}'`: `${value}`) + `, `; 
       }
       else if(type == "key&value"){
-        keys += String(key) + " = " + String(typeof value == "string"? `'${value}'`: `${value}`) + `, `;
+        keys += String(key) + " = " + String(typeof value == "string" || typeof value == "object"? `'${value}'`: `${value}`) + `, `;
       }
     }
   }
@@ -140,10 +146,32 @@ export const getShoppedItems = async (): Promise<shoppingItem[]> => {
     const shoppedItems: shoppingItem[] = [];
     await db.getAllAsync(`SELECT * FROM ${shoppingListTableName}`).then((results: any) => {
       results.forEach((result: any) => {
+        result.purchaseDate = new Date(result.purchaseDate);
+        shoppedItems.push(result);
+      });
+      shoppedItems.sort((a,b) => a.purchaseDate < b.purchaseDate? 1: -1);
+    })
+    
+    return shoppedItems;
+  } catch (error) {
+    console.error(error);
+    throw Error('Failed to get groceryItems !!!');
+  }
+};
+
+export const getShoppedItemsById = async (ID: number): Promise<shoppingItem[]> => {
+  try {
+    if(db == undefined){
+      await getDBConnection();
+    }
+    const shoppedItems: shoppingItem[] = [];
+    await db.getAllAsync(`SELECT * FROM ${shoppingListTableName} WHERE itemID=${ID}`).then((results: any) => {
+      results.forEach((result: any) => {
+        result.purchaseDate = new Date(result.purchaseDate);
         shoppedItems.push(result);
       });
     })
-    
+    shoppedItems.sort((a,b) => a.purchaseDate < b.purchaseDate? 1: -1);
     return shoppedItems;
   } catch (error) {
     console.error(error);
@@ -155,9 +183,11 @@ export const saveShoppedItems = async (ShoppedItems: shoppingItem[]) => {
   if(db == undefined){
     await getDBConnection();
   }
+  console.log("saving shopped Items", ShoppedItems);
   const insertQuery =
     `INSERT OR REPLACE INTO ${shoppingListTableName} (` + spreadModelProperties(shoppingItemModel, "key") + `) values ` +
     ShoppedItems.map(item => `(${spreadModelProperties(item, "value")})`).join(',');
+  console.log("Query", insertQuery);
   return db.runAsync(insertQuery);
 };
 

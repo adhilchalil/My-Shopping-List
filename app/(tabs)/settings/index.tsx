@@ -1,8 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Image, Platform, useColorScheme } from 'react-native';
+import { StyleSheet, useColorScheme, TouchableOpacity } from 'react-native';
 import { Option } from '@/components/Option';
 import { useContext, useEffect, useState } from 'react';
-import { Item } from '@/components/Items';
+import { Item } from '@/components/Item';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -14,9 +14,14 @@ import DeleteUnitModal from '@/components/modal/DeleteUnitModal';
 import DeleteItemModal from '@/components/modal/DeleteItemModal';
 import { AllDataContext } from '@/app/_layout';
 import { deleteGroceryTable, deleteItemMeasureUnitTable } from '@/components/db-service';
+import shoppingItem from '@/models/shoppingItemModel';
+import ItemDetails from '@/components/itemDetails';
 
 export default function ItemsAndSettingsScreen() {
   const [page, setPage] = useState("Main");
+  const [item, setItem] = useState(new GroceryItem());
+  const [shoppingHistory, setShoppingHistory] = useState<shoppingItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const theme = useColorScheme() ?? 'light';
   
   const data:any = useContext(AllDataContext);
@@ -54,8 +59,21 @@ export default function ItemsAndSettingsScreen() {
               <ThemedText onPress={() => deleteGroceryTable()} type="title">Delete Items Table</ThemedText>
             </ThemedView> */}
             {data?.items.map((item: GroceryItem) => 
-              <ThemedView  key={"item" + item.ID} style={styles.titleContainer}>
-                <Item style={styles.itemStyle} ID={item.ID} item={item}></Item>
+              <ThemedView key={"item" + item.ID} style={styles.titleContainer}>
+                <TouchableOpacity
+                  style={styles.itemStyle}
+                  onPress={() => {
+                    setItem(item);
+                    changePage("itemDetails");
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Item onPress={() => {
+                    setItem(item);
+                    changePage("itemDetails");
+                  }}
+                  ID={item.ID} item={item}></Item>
+                </TouchableOpacity>
                 <ThemedView style={styles.buttonContainer}>
                   <EditItemModal item={item} saveItem={data.saveEditedItem} iconType='pencil' units={data.units}></EditItemModal>
                   <DeleteItemModal item={item} deleteItem={data.deleteItem} iconType='trash'></DeleteItemModal>
@@ -92,6 +110,11 @@ export default function ItemsAndSettingsScreen() {
               {/* <Item style={styles.itemStyle} ID={0} item={newItem}></Item> */}
               <EditUnitModal unit={newUnit} saveItem={data.createNewUnit} iconType='add'></EditUnitModal>
             </ThemedView>
+          </>
+        }
+        {page == "itemDetails" &&
+          <>
+            <ItemDetails item={item} changePage={changePage}/>
           </>
         }
 

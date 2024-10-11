@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Image, Platform, Pressable, Alert } from 'react-native';
-import { Item } from '@/components/Items';
+import { StyleSheet, Pressable, Alert } from 'react-native';
+import { Item } from '@/components/Item';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -14,16 +14,20 @@ import ItemMeasureUnit from '@/models/itemMeasreUnitModel';
 import ShoppingItemInput from '@/components/ShoppingItemInput';
 import { ThemedTextInput } from '@/components/ThemedTextInput';
 import shoppingItem from '@/models/shoppingItemModel';
+import { saveShoppedItems } from '@/components/db-service';
 
 export default function ShoppingListScreen() {
 
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [units, setUnits] = useState<ItemMeasureUnit[]>([]);
   const [search, setSearch] = useState("");
+  const [nextShoppingIn, setNextShoppingIn] = useState(String(2));
   const [searchRecommendations, setSearchRecommendations] = useState<GroceryItem[]>([]);
   const [shoppedItems, setShoppedItems] = useState<shoppingItemFull[]>([]);
   const [shoppingItems, setShoppingItems] = useState<shoppingItemFull[]>([]);
   const [recommendations, setRecommendations] = useState<GroceryItem[]>([]);
+  const [savingData, setSavingData] = useState(false);
+  const [edit, setEdit] = useState(true);
   const [recommend, setRecommend] = useState(false);
 
   const data : any = useContext(AllDataContext);
@@ -33,6 +37,13 @@ export default function ShoppingListScreen() {
     setUnits(data.units);
     setShoppedItems(data.shoppedItems);
   }, [data])
+
+  let changenextShoppingIn = (value: any) => {
+    let amountValArr = value.nativeEvent.text.replace(/[^0-9.]/g, '').split(".");
+    let findDecimalPoint = value.nativeEvent.text.indexOf(".");
+    let amountVal = (amountValArr[0] +  (findDecimalPoint > 0? "." + (amountValArr.length > 1?amountValArr[1] : "0"):""));
+    setNextShoppingIn(amountVal);
+  }
 
   let moveToShoppingList = (item: GroceryItem) => {
     let IDCalculated = item.ID;
@@ -76,11 +87,26 @@ export default function ShoppingListScreen() {
     setShoppingList(tempShoppingList);
   }
 
-  let saveShoppedItems = () => {
-    console.log("savetoDB",shoppingItems)
+  let savetoDBShoppedItems = async() => {
+    if(!savingData){
+      setSavingData(true);
+      console.log("savetoDB",shoppingItems);
+      let shoppedItemsFinal = shoppingItems.map((item) => {
+        return new shoppingItem(0, item.itemID, item.purchaseAmount, new Date());
+      });
+      saveShoppedItems(shoppedItemsFinal)
+      .then(() => {
+        setShoppingList([]);
+        setSavingData(false);
+      })
+      .catch((err) => {
+        console.log("error saving to db", err);
+        setSavingData(false);
+      });
+    }
   };
 
-  let setShoppingList = (async (data: any[]) => {
+  let setShoppingList = (async (data: shoppingItemFull[]) => {
     await AsyncStorage.setItem('my-shopping-list-shoplistitems', JSON.stringify(data));
     setShoppingItems(data);
   })
@@ -101,7 +127,7 @@ export default function ShoppingListScreen() {
       if(itemHistory == undefined){
         return true;
       }
-      let bufferDays = (Math.floor(itemHistory.purchaseAmount*item.useTimePerUnit)) - 2;
+      let bufferDays = (Math.floor(itemHistory.purchaseAmount*item.useTimePerUnit)) - Number(nextShoppingIn);
       let bufferDate = new Date(itemHistory.purchaseDate);
       bufferDate.setDate(bufferDate.getDate() + bufferDays);
       if(new Date() >= bufferDate){
@@ -127,7 +153,7 @@ export default function ShoppingListScreen() {
 
   useEffect(() => {
     refreshShoppingItems();
-  },[shoppingItems]);
+  },[shoppingItems, nextShoppingIn]);
 
   useEffect(() => {
     (async () => {
@@ -153,19 +179,21 @@ export default function ShoppingListScreen() {
       headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
       <ThemedView style={styles.headerContainer}>
         <ThemedText type="title">My Shopping List</ThemedText>
+        <ThemedText type="title" onPress={() => setEdit(!edit)}><Ionicons size={20} name={edit?'lock-closed': 'lock-open'}></Ionicons></ThemedText>
       </ThemedView>
-      <ThemedView style={styles.searchBarView}>
+      {edit?<ThemedView style={styles.searchBarView}>
         <ThemedText style={{verticalAlign: 'middle'}}>
           <Ionicons size={20} name='search'></Ionicons>
         </ThemedText>
         <ThemedTextInput placeholder=' search...' style={styles.searchBar} value={search} onChangeText={setSearch}></ThemedTextInput>
       </ThemedView>
+      :<></>}
 
-      {searchRecommendations.length? searchRecommendations?.map((item: GroceryItem) => 
+      {searchRecommendations.length && edit? searchRecommendations?.map((item: GroceryItem) => 
       <ThemedView  key={"searchedItem" + item.ID} style={styles.titleContainer}>
         <Item style={styles.itemStyle} ID={item.ID} item={item}></Item>
         <ThemedText style={styles.buttonContainer} type="subtitle">
-          <Ionicons size={18} name={'checkmark-circle'} onPress={() => {moveToShoppingList(item)}}></Ionicons>
+          <Ionicons size={18} name={'add'} onPress={() => {moveToShoppingList(item)}}></Ionicons>
         </ThemedText>
       </ThemedView>
       ): <></>}
@@ -187,38 +215,45 @@ export default function ShoppingListScreen() {
             item = {item}
             editShoppingItem={editShoppingItem}
             index ={index}
-            editable={true}
+            editable={edit}
           >
           </ShoppingItemInput>
+          {edit?
           <ThemedText type="subtitle">
-            <Ionicons size={18} name={'remove-circle'} onPress={() => {removeFromShoppingList(item, index)}}></Ionicons>
-          </ThemedText>
+            <Ionicons size={18} name={'trash'} onPress={() => {removeFromShoppingList(item, index)}}></Ionicons>
+          </ThemedText>:
+          <></>}
         </ThemedView>
       ): <ThemedText style={styles.emptyContainer} type="subtitle">Add items to streamline your shopping!</ThemedText>}
           {shoppingItems?.length>0 ? <Pressable
             style={[styles.button]}
-            onPress={() => {saveShoppedItems()}}
+            onPress={() => {savetoDBShoppedItems()}}
           >
             <ThemedText style={styles.buttonTextStyle}>
               <ThemedText style={{verticalAlign: 'middle'}}>
-                <Ionicons size={20} name={'checkmark-circle'} onPress={() => {saveShoppedItems()}}></Ionicons>
+                {savingData?<Ionicons size={20} name={"ellipsis-horizontal"}/>:<Ionicons size={20} name={'checkmark-circle'} onPress={() => {savetoDBShoppedItems()}}></Ionicons>}
               </ThemedText>
               <ThemedText type="subtitle">Done Shopping</ThemedText>
             </ThemedText>
           </Pressable>: ""}
 
+      {edit?
+      <>
       <ThemedView style={styles.headerContainer}>
-        <ThemedText type="title">Recommendations</ThemedText>
+        <ThemedText type="subtitle">Recommend. for</ThemedText>
+        <ThemedTextInput inputMode='numeric' value={String(nextShoppingIn)} onChangeText={(value) => setNextShoppingIn(value)} onEndEditing={changenextShoppingIn}></ThemedTextInput>
+        <ThemedText type="subtitle">Days</ThemedText>
       </ThemedView>
 
       {recommendations.length? recommendations?.map((item: GroceryItem) => 
       <ThemedView  key={"recommendedItem" + item.ID} style={styles.titleContainer}>
         <Item style={styles.itemStyle} ID={item.ID} item={item}></Item>
         <ThemedText style={styles.buttonContainer} type="subtitle">
-          <Ionicons size={18} name={'checkmark-circle'} onPress={() => {moveToShoppingList(item)}}></Ionicons>
+          <Ionicons size={20} name={'add'} onPress={() => {moveToShoppingList(item)}}></Ionicons>
         </ThemedText>
       </ThemedView>
       ): <ThemedText type="subtitle">No recommendations available!</ThemedText>}
+      </>:<></>}
     </ParallaxScrollView>
   );
 }
@@ -259,6 +294,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 3,
+  },
+  boldIcon: {
+    fontWeight: 'bold'
   },
   textInput:{
     color: 'white'

@@ -26,7 +26,7 @@ export default function ShoppingItemInput({style, item, editShoppingItem, index,
       setPurchaseAmount(String(item.purchaseAmount));
     }, [item])
 
-    return <View style={[style, styles.viewStyle]}>
+    return <View style={[style, styles.viewStyle, editable? styles.editableViewWidth: styles.lockedViewWidth]}>
       <ThemedText style={styles.textStyle} type="subtitle">
         {item.GroceryItem?.name}
       </ThemedText>
@@ -59,8 +59,13 @@ export default function ShoppingItemInput({style, item, editShoppingItem, index,
 }
 
 const styles = StyleSheet.create({
-    viewStyle:{
+    editableViewWidth: {
       width: '80%',
+    },
+    lockedViewWidth:{
+      width: '100%',
+    },
+    viewStyle:{
       flexDirection: 'row',
       justifyContent: 'space-between'
     },
